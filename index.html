@@ -2,28 +2,59 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>LIFF 測試頁</title>
+  <title>LINE 賀卡</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-  <h1>LIFF Page Ready</h1>
-  <button id="btnProfile">取得使用者資料</button>
-  <pre id="profile"></pre>
+  <h1>聖誕賀卡</h1>
+  <input type="text" id="name" placeholder="輸入你的名字">
+  <textarea id="message" placeholder="輸入賀卡訊息"></textarea>
+  <button id="shareBtn">生成並分享賀卡</button>
 
   <script>
-    const LIFF_ID = "2008578496-5ovBYvYv";
-
     async function main() {
-      await liff.init({ liffId: LIFF_ID });
-
-      document.getElementById("btnProfile").addEventListener("click", async () => {
-        const profile = await liff.getProfile();
-        document.getElementById("profile").textContent =
-          JSON.stringify(profile, null, 2);
-      });
+      await liff.init({ liffId: "2008578496-5ovBYvYv" });
     }
-
     main();
+
+    document.getElementById("shareBtn").addEventListener("click", async () => {
+      const name = document.getElementById("name").value;
+      const message = document.getElementById("message").value;
+      if(!name || !message) return alert("請填寫完整內容");
+
+      // 1. 建立 canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+
+      // 2. 載入 Canva 背景圖片
+      const bg = new Image();
+      bg.crossOrigin = "anonymous"; // 防止 CORS 問題
+      bg.src = 'https://raw.githubusercontent.com/Apple54986/liff-test/main/card-bg.jpg'; 
+      bg.onload = async () => {
+        ctx.drawImage(bg, 0, 0, 400, 300);
+
+        // 3. 加上文字
+        ctx.fillStyle = 'black';
+        ctx.font = '20px sans-serif';
+        ctx.fillText(`${name} 說：${message}`, 20, 150);
+
+        // 4. 轉成圖片 URL
+        const dataUrl = canvas.toDataURL('image/png');
+
+        // 5. 分享到 LINE
+        try {
+          await liff.shareTargetPicker([{
+            type: 'image',
+            originalContentUrl: dataUrl,
+            previewImageUrl: dataUrl
+          }]);
+        } catch(err) {
+          console.error(err);
+        }
+      }
+    });
   </script>
 </body>
 </html>
