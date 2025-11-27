@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>LIFF 測試頁</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h1>LIFF Page Ready</h1>
+  <button id="btnProfile">取得使用者資料</button>
+  <pre id="profile"></pre>
+
+  <script>
+    const LIFF_ID = "2008578496-5ovBYvYv";
+
+    async function main() {
+      await liff.init({ liffId: LIFF_ID });
+
+      document.getElementById("btnProfile").addEventListener("click", async () => {
+        const profile = await liff.getProfile();
+        document.getElementById("profile").textContent =
+          JSON.stringify(profile, null, 2);
+      });
+    }
+
+    main();
+  </script>
+</body>
+</html>
