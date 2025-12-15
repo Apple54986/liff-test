@@ -80,14 +80,25 @@
   <div>
     <button id="previewBtn">👀 預覽賀卡</button>
     <button id="downloadBtn">⬇️ 儲存圖片</button>
-  </div>
+  document.getElementById("downloadBtn").addEventListener("click", () => {
+  canvas.toBlob((blob) => {
+    if (!blob) {
+      alert("圖片產生失敗，請重新預覽");
+      return;
+    }
 
-  <canvas id="cardCanvas"></canvas>
+    const url = URL.createObjectURL(blob);
 
-  <script>
-    const canvas = document.getElementById("cardCanvas");
-    const ctx = canvas.getContext("2d");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "新年賀卡.png"; // 存檔名稱
+    document.body.appendChild(a);
+    a.click();
 
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, "image/png");
+});
     // 🎨 Canvas 尺寸（對應 horse.jpg）
     canvas.width = 1080;
     canvas.height = 1620;
@@ -121,7 +132,7 @@
       ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
       const centerX = canvas.width / 2;
-      const startY = 1550;   // 淡黃色框內最佳位置
+      const startY = 2000;   // 淡黃色框內最佳位置
       const maxWidth = 720;
       const lineHeight = 66;
 
