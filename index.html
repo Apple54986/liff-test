@@ -118,11 +118,6 @@
     function drawCard(message) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-
-      // 淡黃色框
-      ctx.fillStyle = "rgba(255, 250, 200, 0.6)";
-      ctx.fillRect(180, 750, 720, 200);
-
       const centerX = canvas.width / 2;
       const startY = 820; // 調整文字在框中位置
       const maxWidth = 720;
