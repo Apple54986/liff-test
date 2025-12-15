@@ -1,127 +1,257 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>LINE 新年賀卡</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #fafafa;
-      text-align: center;
-      padding: 20px;
-    }
-    textarea {
-      width: 90%;
-      max-width: 420px;
-      margin: 8px 0;
-      padding: 10px;
-      font-size: 17px;
-    }
-    button {
-      margin: 6px;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-    canvas {
-      margin-top: 15px;
-      max-width: 100%;
-      border-radius: 14px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>客製化祝福卡片</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 引入 LINE LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-
 <body>
-  <h2>🎉 新年賀卡產生器</h2>
+    <div class="container">
+        <h2>✨ 製作你的專屬賀卡</h2>
+        
+        <div class="input-group">
+            <label for="nameInput">輸入名字：</label>
+            <input type="text" id="nameInput" placeholder="例如: 王小明" maxlength="10">
+            
+            <label for="msgInput">輸入祝福語：</label>
+            <input type="text" id="msgInput" placeholder="例如: 馬上有錢" maxlength="12">
+            
+            <button id="generateBtn">生成圖片</button>
+        </div>
 
-  <textarea id="message" rows="3" placeholder="請輸入祝福訊息"></textarea>
+        <!-- 預覽區域 -->
+        <div class="preview-area" id="previewArea" style="display:none;">
+            <div class="divider"></div>
+            <p class="hint">👇 長按圖片即可儲存傳送 👇</p>
+            <img id="resultImage" alt="Generated Image">
+            <a id="downloadLink" class="download-btn" href="#" download="card.png">下載圖片</a>
+        </div>
 
-  <div>
-    <button id="previewBtn">👀 預覽賀卡</button>
-    <button id="shareBtn">📤 分享到 LINE</button>
-  </div>
+        <!-- 隱藏的繪圖區 (使用者看不到) -->
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
 
-  <canvas id="cardCanvas"></canvas>
-
-  <script>
-    async function main() {
-      await liff.init({ liffId: "2008578496-5ovBYvYv" });
-    }
-    main();
-
-    const canvas = document.getElementById("cardCanvas");
-    const ctx = canvas.getContext("2d");
-
-    // 📌 使用你的圖片比例：1080 × 1620
-    canvas.width = 1080;
-    canvas.height = 1620;
-
-    // 📌 背景圖片
-    const bg = new Image();
-    bg.crossOrigin = "anonymous";
-    bg.src = "https://raw.githubusercontent.com/apple54986/liff-test/main/馬年賀卡.png";
-
-    // ✨ 自動換行
-    function wrapText(text, x, y, maxWidth, lineHeight) {
-      const words = text.split("");
-      let line = "";
-
-      for (let i = 0; i < words.length; i++) {
-        const test = line + words[i];
-        if (ctx.measureText(test).width > maxWidth) {
-          ctx.fillText(line, x, y);
-          line = words[i];
-          y += lineHeight;
-        } else {
-          line = test;
-        }
-      }
-      ctx.fillText(line, x, y);
-    }
-
-    // 🎨 主繪製（只有祝福文字）
-    function drawCard(message) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-
-      // ✨ 祝福文字位置（淡色框中）
-      const textX = 540;        // 置中
-      const startY = 420;       // 開始位置
-      const maxWidth = 800;
-      const lineHeight = 60;
-
-      ctx.fillStyle = "#333";
-      ctx.textAlign = "center";
-      ctx.font = "48px sans-serif";
-
-      wrapText(message, textX, startY, maxWidth, lineHeight);
-    }
-
-    // 🔍 預覽
-    document.getElementById("previewBtn").addEventListener("click", () => {
-      const message = document.getElementById("message").value || "祝你新年快樂！";
-      drawCard(message);
-    });
-
-    // 📤 分享到 LINE（分享圖片）
-    document.getElementById("shareBtn").addEventListener("click", async () => {
-      const dataUrl = canvas.toDataURL("image/png");
-
-      try {
-        await liff.shareTargetPicker([
-          {
-            type: "image",
-            originalContentUrl: dataUrl,
-            previewImageUrl: dataUrl
-          }
-        ]);
-      } catch (err) {
-        console.error(err);
-      }
-    });
-  </script>
-
+    <script src="script.js"></script>
 </body>
 </html>
+body {
+    font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.container {
+    background: white;
+    width: 100%;
+    max-width: 480px; /* 手機寬度適配 */
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    box-sizing: border-box;
+}
+
+h2 {
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+label {
+    display: block;
+    text-align: left;
+    margin: 15px 0 5px;
+    font-weight: bold;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #eee;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+    box-sizing: border-box; /* 確保寬度包含 padding */
+    transition: border-color 0.3s;
+}
+
+input:focus {
+    border-color: #06c755;
+}
+
+button {
+    width: 100%;
+    margin-top: 25px;
+    padding: 15px;
+    background-color: #06c755; /* LINE 官方綠色 */
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(6, 199, 85, 0.2);
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #05a546;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.divider {
+    height: 1px;
+    background: #eee;
+    margin: 25px 0;
+}
+
+.hint {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+#resultImage {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    border: 1px solid #eee;
+}
+
+.download-btn {
+    display: block;
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #333;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+}
+// ==========================================
+//           ▼▼▼ 設定區域 ▼▼▼
+// ==========================================
+
+const config = {
+    // 你的 LINE LIFF ID (已設定好)
+    liffId: "2008578496-5ovBYvYv", 
+
+    // 背景圖片檔名 (請確認 GitHub 上有這張圖)
+    bgImage: "template.jpg", 
+
+    // 「名字」的文字設定
+    nameText: {
+        x: 540,           // 左右位置 (假設圖片寬1080，540為中間)
+        y: 400,           // 上下位置 (數字越大越下面)
+        size: "60px",     // 字體大小
+        color: "#333333", // 字體顏色 (黑色)
+        font: "Microsoft JhengHei"
+    },
+
+    // 「祝福語」的文字設定
+    msgText: {
+        x: 540,           // 左右位置
+        y: 600,           // 上下位置
+        size: "50px",     // 字體大小
+        color: "#ff5500", // 字體顏色 (橘紅色)
+        font: "Microsoft JhengHei"
+    }
+};
+
+// ==========================================
+//           ▲▲▲ 程式邏輯 (免修改) ▲▲▲
+// ==========================================
+
+window.onload = function() {
+    initializeLiff(config.liffId);
+    document.getElementById('generateBtn').addEventListener('click', generateImage);
+};
+
+// 初始化 LIFF
+function initializeLiff(myLiffId) {
+    liff.init({ liffId: myLiffId })
+        .then(() => {
+            // 如果是在 LINE App 內開啟，嘗試自動抓取名字
+            if (liff.isLoggedIn()) {
+                liff.getProfile().then(profile => {
+                    const nameInput = document.getElementById('nameInput');
+                    if(nameInput) {
+                        nameInput.value = profile.displayName; // 自動填入暱稱
+                    }
+                }).catch(err => console.error("無法取得個人資料", err));
+            }
+        })
+        .catch((err) => {
+            console.error('LIFF 初始化失敗:', err);
+        });
+}
+
+// 生成圖片的主要功能
+function generateImage() {
+    const nameInput = document.getElementById('nameInput').value || "朋友";
+    const msgInput = document.getElementById('msgInput').value || "順心如意";
+    
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    // 允許跨域讀取 (對於 GitHub Pages 來說通常需要)
+    img.crossOrigin = "Anonymous";
+    img.src = config.bgImage;
+
+    img.onload = function() {
+        // 1. 設定畫布大小等於圖片原始大小
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // 2. 繪製背景圖
+        ctx.drawImage(img, 0, 0);
+
+        // 3. 繪製「名字」
+        ctx.textAlign = "center"; // 文字置中
+        ctx.font = `bold ${config.nameText.size} '${config.nameText.font}'`;
+        ctx.fillStyle = config.nameText.color;
+        ctx.fillText(nameInput, config.nameText.x, config.nameText.y);
+
+        // 4. 繪製「祝福語」
+        ctx.font = `${config.msgText.size} '${config.msgText.font}'`;
+        ctx.fillStyle = config.msgText.color;
+        ctx.fillText(msgInput, config.msgText.x, config.msgText.y);
+
+        // 5. 轉換成圖片並顯示
+        try {
+            const dataURL = canvas.toDataURL("image/png");
+            const resultImg = document.getElementById('resultImage');
+            const downloadBtn = document.getElementById('downloadLink');
+            
+            resultImg.src = dataURL;
+            downloadBtn.href = dataURL;
+            
+            // 顯示預覽區
+            document.getElementById('previewArea').style.display = 'block';
+            
+            // 自動捲動到圖片位置
+            resultImg.scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+            alert("圖片生成失敗，請確認瀏覽器支援 Canvas");
+        }
+    };
+
+    img.onerror = function() {
+        alert("❌ 錯誤：找不到背景圖片！\n請確認 GitHub 上是否有上傳名為 'template.jpg' 的檔案。");
+    };
+}
