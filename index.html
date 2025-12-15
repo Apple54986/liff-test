@@ -1,87 +1,112 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>專屬新年賀卡</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f5f5f5;
       text-align: center;
-      padding: 20px;
+      padding: 16px;
+      margin: 0;
     }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
     textarea {
-      width: 90%;
+      width: 92%;
       max-width: 420px;
-      margin: 10px 0;
+      margin: 10px 0 6px;
       padding: 12px;
       font-size: 17px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      resize: none;
     }
+
+    .hint {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
     button {
-      margin: 6px;
-      padding: 10px 20px;
+      margin: 6px 4px;
+      padding: 10px 18px;
       font-size: 16px;
+      border-radius: 8px;
+      border: none;
       cursor: pointer;
     }
+
+    #previewBtn {
+      background: #e0e0e0;
+    }
+
+    #downloadBtn {
+      background: #ff5252;
+      color: #fff;
+      display: none;
+    }
+
     canvas {
-      margin-top: 15px;
+      margin: 14px auto 0;
       max-width: 100%;
       border-radius: 14px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      display: block;
     }
   </style>
 </head>
 
 <body>
+
   <h2>專屬新年賀卡</h2>
 
-  <textarea id="message" rows="3" placeholder="請輸入新年祝福"></textarea>
+  <textarea
+    id="message"
+    rows="2"
+    maxlength="15"
+    placeholder="輸入 15 字以內的新年祝福"
+  ></textarea>
+
+  <div class="hint">最多 15 個字，會自動換行</div>
 
   <div>
     <button id="previewBtn">👀 預覽賀卡</button>
-    <button id="shareBtn">📤 分享到 LINE</button>
+    <button id="downloadBtn">⬇️ 儲存圖片</button>
   </div>
 
   <canvas id="cardCanvas"></canvas>
 
   <script>
-    async function main() {
-      await liff.init({ liffId: "2008578496-5ovBYvYv" });
-    }
-    main();
-// ✏️ 限制最多 15 字
-const textarea = document.getElementById("message");
-textarea.addEventListener("input", () => {
-  if (textarea.value.length > 15) {
-    textarea.value = textarea.value.slice(0, 15);
-  }
-});
-
     const canvas = document.getElementById("cardCanvas");
     const ctx = canvas.getContext("2d");
 
-    // 🎨 Canvas 尺寸（依圖片）
+    // 🎨 Canvas 尺寸（對應 horse.jpg）
     canvas.width = 1080;
     canvas.height = 1620;
 
-    // 📌 背景圖片（請確認是英文檔名）
+    // 🖼 背景圖片（GitHub 上）
     const bg = new Image();
     bg.crossOrigin = "anonymous";
     bg.src = "https://raw.githubusercontent.com/apple54986/liff-test/main/horse.jpg";
 
-    // ✨ 自動換行工具
-    function wrapText(text, x, startY, maxWidth, lineHeight) {
-      const chars = text.split("");
+    // ✨ 自動換行（適合中文）
+    function wrapText(ctx, text, x, startY, maxWidth, lineHeight) {
       let line = "";
       let y = startY;
 
-      for (let i = 0; i < chars.length; i++) {
-        const testLine = line + chars[i];
-        if (ctx.measureText(testLine).width > maxWidth) {
+      for (let i = 0; i < text.length; i++) {
+        const testLine = line + text[i];
+        if (ctx.measureText(testLine).width > maxWidth && line !== "") {
           ctx.fillText(line, x, y);
-          line = chars[i];
+          line = text[i];
           y += lineHeight;
         } else {
           line = testLine;
@@ -90,62 +115,39 @@ textarea.addEventListener("input", () => {
       ctx.fillText(line, x, y);
     }
 
-    // 🎨 繪製賀卡（文字位置已精算）
+    // 🎉 繪製賀卡（文字位置已調整好）
     function drawCard(message) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
-      // 📍 淡黃色框框區域（安全範圍）
-      const centerX = canvas.width / 2; // 540
-      const startY = 420;               // 框框上緣內縮
-      const maxWidth = 760;             // 不超出框框
-      const lineHeight = 64;
+      const centerX = canvas.width / 2;
+      const startY = 460;   // 淡黃色框內最佳位置
+      const maxWidth = 720;
+      const lineHeight = 66;
 
       ctx.textAlign = "center";
-      ctx.fillStyle = "#c0392b";        // 喜氣紅
-      ctx.font = "bold 52px serif";
+      ctx.fillStyle = "#c40000";
+      ctx.font = "bold 54px serif";
 
-      wrapText(message, centerX, startY, maxWidth, lineHeight);
+      wrapText(ctx, message, centerX, startY, maxWidth, lineHeight);
     }
 
     // 👀 預覽
     document.getElementById("previewBtn").addEventListener("click", () => {
       const message =
-        document.getElementById("message").value || "新年快樂，萬事如意！";
-      function drawCard(message) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+        document.getElementById("message").value || "新年快樂";
+      drawCard(message);
+      document.getElementById("downloadBtn").style.display = "inline-block";
+    });
 
-  // 🎯 淡黃色框的最佳視覺區域（實測）
-  const centerX = canvas.width / 2; // 540
-  const startY = 460;               // 文字垂直置中偏上
-  const maxWidth = 720;             // 框內安全寬
-  const lineHeight = 66;
-
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#c40000";        // 喜氣紅
-  ctx.font = "bold 54px serif";
-
-  wrapText(ctx, message, centerX, startY, maxWidth, lineHeight);
-}
-
-    // 📤 分享（先預覽再分享）
-    document.getElementById("shareBtn").addEventListener("click", async () => {
-      const dataUrl = canvas.toDataURL("image/png");
-
-      try {
-        await liff.shareTargetPicker([
-          {
-            type: "image",
-            originalContentUrl: dataUrl,
-            previewImageUrl: dataUrl
-          }
-        ]);
-      } catch (err) {
-        console.error(err);
-        alert("請在 LINE 中開啟再分享");
-      }
+    // ⬇️ 儲存圖片到手機
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.download = "新年賀卡.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
     });
   </script>
+
 </body>
 </html>
