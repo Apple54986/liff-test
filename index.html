@@ -5,70 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>專屬新年賀卡</title>
 
-  <!-- 引入 Google 字體：馬善政毛筆體 (最接近榜書質感的免費字體) -->
-  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+  <!-- 引入書法字體 (最接近榜書質感的毛筆體) -->
+  <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
 
   <style>
     body {
-      font-family: "Microsoft JhengHei", -apple-system, sans-serif;
+      font-family: -apple-system, "Microsoft JhengHei", sans-serif;
       background: #f5f5f5;
       text-align: center;
       padding: 20px 16px;
       margin: 0;
     }
 
-    h2 { margin-bottom: 12px; color: #333; }
+    h2 { color: #333; margin-bottom: 12px; }
 
+    /* 輸入框預覽樣式 */
     textarea {
-      /* 讓輸入框預覽時也顯示毛筆感 */
-      font-family: 'Ma Shan Zheng', cursive;
+      font-family: 'Zhi Mang Xing', cursive;
       width: 100%;
       max-width: 400px;
       margin: 10px 0;
       padding: 12px;
-      font-size: 20px;
-      color: #c3262d; /* 輸入時也是紅色 */
+      font-size: 24px;
+      color: #c3262d; /* 指定紅色 */
+      border: 2px solid #ccc;
       border-radius: 12px;
-      border: 1px solid #ccc;
       resize: none;
       box-sizing: border-box;
       outline: none;
+      text-align: center;
     }
     
     textarea:focus { border-color: #c3262d; }
 
-    .hint { font-size: 13px; color: #888; margin-bottom: 15px; }
+    .btn-group { margin: 15px 0; }
 
     button {
       margin: 5px;
-      padding: 12px 20px;
+      padding: 12px 24px;
       font-size: 16px;
       border-radius: 50px;
       border: none;
       cursor: pointer;
       font-weight: bold;
-      transition: opacity 0.2s;
     }
     
     #previewBtn { background: #e0e0e0; color: #333; }
-
-    #downloadBtn {
-      background: #c3262d; /* 改為指定的紅色 */
-      color: #fff;
-      display: none; 
-      box-shadow: 0 4px 6px rgba(195, 38, 45, 0.3);
+    #downloadBtn { 
+      background: #c3262d; /* 指定紅色 */
+      color: #fff; 
+      display: none;
+      box-shadow: 0 4px 10px rgba(195, 38, 45, 0.3);
     }
 
     canvas {
-      margin: 20px auto;
+      margin: 10px auto;
       max-width: 100%;
       height: auto;
       border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      display: block;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      background-color: #fff;
     }
     
-    #loading { display: none; margin-top: 10px; color: #666; }
+    #loading { color: #c3262d; font-weight: bold; display: none; margin: 10px; }
   </style>
 </head>
 
@@ -76,21 +75,14 @@
 
   <h2>🧧 專屬新年賀卡</h2>
 
-  <textarea
-    id="message"
-    rows="2"
-    maxlength="11"
-    placeholder="在此輸入祝福語..."
-  ></textarea>
-
-  <div class="hint">💡 建議輸入 4~8 個字效果最好</div>
+  <textarea id="message" rows="2" maxlength="11" placeholder="輸入祝福語..."></textarea>
 
   <div class="btn-group">
-    <button id="previewBtn">預覽賀卡</button>
-    <button id="downloadBtn"> 分享 / 下載圖片</button>
+    <button id="previewBtn">1. 點我預覽字體</button>
+    <button id="downloadBtn">2. 分享 / 下載圖片</button>
   </div>
   
-  <div id="loading">處理中...</div>
+  <div id="loading">字體載入中，請稍候...</div>
 
   <canvas id="cardCanvas"></canvas>
 
@@ -106,99 +98,79 @@
     const bgSrc = "https://raw.githubusercontent.com/apple54986/liff-test/main/horse.jpg";
     let bgImage = null;
 
+    // 載入背景圖
     function loadBg() {
       return new Promise((resolve, reject) => {
         if (bgImage) return resolve(bgImage);
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = bgSrc;
+        img.src = bgSrc + "?t=" + new Date().getTime(); // 防止快取
         img.onload = () => {
           bgImage = img;
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           resolve(img);
         };
-        img.onerror = () => reject("背景圖片載入失敗");
+        img.onerror = () => reject("圖片載入失敗");
       });
     }
 
-    loadBg().catch(err => console.error(err));
-
-    function wrapText(ctx, text, x, startY, maxWidth, lineHeight) {
-      let line = "";
-      let y = startY;
-      for (let i = 0; i < text.length; i++) {
-        const testLine = line + text[i];
-        if (ctx.measureText(testLine).width > maxWidth && line !== "") {
-          ctx.fillText(line, x, y);
-          line = text[i];
-          y += lineHeight;
-        } else {
-          line = testLine;
-        }
-      }
-      ctx.fillText(line, x, y);
-    }
+    // 初始化先畫背景
+    loadBg();
 
     async function drawCard() {
       const message = document.getElementById("message").value || "新年快樂";
+      loadingText.style.display = "block";
       
       try {
-        // 確保字體已加載完成再繪製，否則 Canvas 會抓不到字體
-        await document.fonts.load('100px "Ma Shan Zheng"');
+        // 關鍵：等待字體完全加載完成
+        await document.fonts.load('100px "Zhi Mang Xing"');
         
         const bg = await loadBg();
+        
+        // 清除畫布並重畫背景
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
         const centerX = canvas.width / 2;
         const startY = 820; 
-        const maxWidth = 800;
-        const lineHeight = 120;
-
+        
+        // 設定文字樣式
         ctx.textAlign = "center";
+        ctx.fillStyle = "#c3262d"; // 強制指定紅色
         
-        // --- 修改重點：字體顏色與樣式 ---
-        ctx.fillStyle = "#c3262d"; // 指定紅色
-        // 使用 Google Font，並增加字體大小使其有「榜書」的大氣感
-        ctx.font = "normal 110px 'Ma Shan Zheng', cursive"; 
+        // 榜書字體大且重，這裡使用 130px 並加粗感
+        ctx.font = "normal 130px 'Zhi Mang Xing', cursive";
 
-        wrapText(ctx, message, centerX, startY, maxWidth, lineHeight);
+        // 繪製文字 (處理換行)
+        const lines = message.length > 6 ? [message.slice(0, 6), message.slice(6)] : [message];
+        lines.forEach((line, index) => {
+          ctx.fillText(line, centerX, startY + (index * 140));
+        });
         
+        loadingText.style.display = "none";
         downloadBtn.style.display = "inline-block";
         
       } catch (error) {
         console.error(error);
-        alert("字體或圖片載入失敗，請重試");
+        loadingText.innerText = "載入失敗，請刷新頁面";
       }
     }
 
+    // 分享功能
     async function handleDownload() {
-      loadingText.style.display = "block";
       canvas.toBlob(async (blob) => {
-        if (!blob) {
-          loadingText.style.display = "none";
-          return;
-        }
-        const fileName = "新年賀卡.png";
-        const file = new File([blob], fileName, { type: "image/png" });
-
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (!blob) return;
+        const file = new File([blob], "新年賀卡.png", { type: "image/png" });
+        if (navigator.share && navigator.canShare({ files: [file] })) {
           try {
-            await navigator.share({ files: [file], title: '新年賀卡', text: '祝您 2026 馬上有錢！' });
-            loadingText.style.display = "none";
-            return;
-          } catch (error) {
-            if (error.name !== 'AbortError') console.log('Share error:', error);
-          }
+            await navigator.share({ files: [file], title: '新年賀卡' });
+          } catch (e) { console.log('Share canceled'); }
+        } else {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "新年賀卡.png";
+          a.click();
         }
-
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
-        loadingText.style.display = "none";
       }, "image/png");
     }
 
