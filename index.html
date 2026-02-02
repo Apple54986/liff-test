@@ -24,7 +24,7 @@
       max-width: 400px;
       margin: 10px 0;
       padding: 12px;
-      font-size: 16px;
+      font-size: 18px; /* 稍微加大字體方便手機輸入 */
       border-radius: 12px;
       border: 1px solid #ccc;
       resize: none;
@@ -39,7 +39,30 @@
     .hint {
       font-size: 13px;
       color: #888;
+      margin-bottom: 10px;
+    }
+
+    /* 新增顏色選擇器的樣式 */
+    .color-section {
       margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .color-section label {
+      font-size: 15px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    #colorPicker {
+      width: 50px;
+      height: 40px;
+      border: none;
+      background: none;
+      cursor: pointer;
     }
 
     .btn-group {
@@ -48,7 +71,7 @@
 
     button {
       margin: 5px;
-      padding: 12px 20px;
+      padding: 12px 25px;
       font-size: 16px;
       border-radius: 50px;
       border: none;
@@ -67,9 +90,9 @@
     }
 
     #downloadBtn {
-      background: #ff5252; /* 紅色按鈕 */
+      background: #ff5252;
       color: #fff;
-      display: none; /* 預設隱藏 */
+      display: none;
       box-shadow: 0 4px 6px rgba(255, 82, 82, 0.3);
     }
 
@@ -82,7 +105,6 @@
       display: block;
     }
     
-    /* 讀取中的遮罩 */
     #loading {
       display: none;
       margin-top: 10px;
@@ -105,6 +127,12 @@
 
   <div class="hint">💡 輸入 11 個字以內</div>
 
+  <!-- 新增：文字顏色選擇區 -->
+  <div class="color-section">
+    <label for="colorPicker">🎨 文字顏色：</label>
+    <input type="color" id="colorPicker" value="#000000">
+  </div>
+
   <div class="btn-group">
     <button id="previewBtn">預覽賀卡</button>
     <button id="downloadBtn"> 分享 / 下載圖片</button>
@@ -118,25 +146,24 @@
     const canvas = document.getElementById("cardCanvas");
     const ctx = canvas.getContext("2d");
     const downloadBtn = document.getElementById("downloadBtn");
+    const colorPicker = document.getElementById("colorPicker"); // 新增：抓取顏色選擇器
     const loadingText = document.getElementById("loading");
 
-    // 設定畫布解析度
+    // 設定畫布解析度 (配合 1080x1620 比例)
     canvas.width = 1080;
     canvas.height = 1620;
 
-    // 1. 載入背景圖 (使用 Promise 確保載入完成)
     const bgSrc = "https://raw.githubusercontent.com/apple54986/liff-test/main/horse.jpg";
     let bgImage = null;
 
     function loadBg() {
       return new Promise((resolve, reject) => {
-        if (bgImage) return resolve(bgImage); // 如果已載入過
+        if (bgImage) return resolve(bgImage);
         const img = new Image();
-        img.crossOrigin = "anonymous"; // 關鍵：允許跨域
+        img.crossOrigin = "anonymous";
         img.src = bgSrc;
         img.onload = () => {
           bgImage = img;
-          // 預設先畫一次空背景
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           resolve(img);
         };
@@ -144,10 +171,8 @@
       });
     }
 
-    // 初始化載入
     loadBg().catch(err => console.error(err));
 
-    // 2. 文字換行邏輯
     function wrapText(ctx, text, x, startY, maxWidth, lineHeight) {
       let line = "";
       let y = startY;
@@ -164,9 +189,9 @@
       ctx.fillText(line, x, y);
     }
 
-    // 3. 繪製賀卡主程式
     async function drawCard() {
       const message = document.getElementById("message").value || "新年快樂";
+      const selectedColor = colorPicker.value; // 修改：取得當前選取的顏色
       
       try {
         const bg = await loadBg();
@@ -176,15 +201,14 @@
         const centerX = canvas.width / 2;
         const startY = 820; 
         const maxWidth = 720;
-        const lineHeight = 90;
+        const lineHeight = 100;
 
         ctx.textAlign = "center";
-        ctx.fillStyle = "#000000";
-        ctx.font = "bold 65px serif"; // 可視需要換字體
+        ctx.fillStyle = selectedColor; // 修改：套用選取的顏色
+        ctx.font = "bold 75px serif";
 
         wrapText(ctx, message, centerX, startY, maxWidth, lineHeight);
         
-        // 顯示下載按鈕
         downloadBtn.style.display = "inline-block";
         
       } catch (error) {
@@ -192,7 +216,9 @@
       }
     }
 
-    // 4. 處理分享與下載 (核心修改部分)
+    // 當使用者改變顏色時，自動更新預覽（可選，增加體驗）
+    colorPicker.addEventListener("input", drawCard);
+
     async function handleDownload() {
       loadingText.style.display = "block";
       
@@ -206,26 +232,20 @@
         const fileName = "新年賀卡.png";
         const file = new File([blob], fileName, { type: "image/png" });
 
-        // A. 優先嘗試 Web Share API (手機原生分享選單)
-        // 這是目前在手機上體驗最好的方式：會跳出「儲存影像」、「傳送到LINE」等選項
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               files: [file],
               title: '新年賀卡',
-              text: '2026年馬上有錢!!!'
+              text: '送你一張新年賀卡！'
             });
             loadingText.style.display = "none";
-            return; // 成功分享後就結束
+            return;
           } catch (error) {
-            // 使用者取消分享不視為錯誤，但如果是其他錯誤則繼續執行 B 方案
-            if (error.name !== 'AbortError') {
-              console.log('Share API error:', error);
-            }
+            if (error.name !== 'AbortError') console.log('Share error:', error);
           }
         }
 
-        // B. 備用方案：傳統下載 (電腦版或不支援 Share 的環境)
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -236,11 +256,9 @@
         URL.revokeObjectURL(url);
         
         loadingText.style.display = "none";
-        
       }, "image/png");
     }
 
-    // 綁定事件
     document.getElementById("previewBtn").addEventListener("click", drawCard);
     downloadBtn.addEventListener("click", handleDownload);
 
