@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>專屬新年賀卡</title>
+  <title>新年賀卡</title>
 
   <style>
     body {
@@ -94,7 +94,7 @@
 
 <body>
 
-  <h2>🧧 專屬新年賀卡</h2>
+  <h2>🧧 新年賀卡</h2>
 
   <!-- 限制最多 4 個字 -->
   <textarea
@@ -125,7 +125,7 @@
     canvas.width = 1080;
     canvas.height = 1620;
 
-    const bgSrc = "https://raw.githubusercontent.com/apple54986/liff-test/main/horse.jpg";
+    const bgSrc = "horse.jpg";
     let bgImage = null;
 
     function loadBg() {
@@ -148,7 +148,7 @@
 
     // 繪製賀卡主程式
     async function drawCard() {
-      const message = document.getElementById("message").value || "萬事如意";
+      const message = document.getElementById("message").value || "恭喜發財";
       
       try {
         const bg = await loadBg();
